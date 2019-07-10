@@ -1,0 +1,847 @@
+
+
+
+///////////////////////////1번: 후위표기 배열로 구현///////////////////
+//
+#include <iostream> 
+#include <stdio.h> 
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX_STACK_SIZE 100
+
+typedef struct stackRec {
+char stack[MAX_STACK_SIZE];
+int toploc;
+} stackObject;
+
+
+void init(stackObject* s) {
+    s->toploc= -1;
+}
+
+void push(char tmp,stackObject* s) {
+    if((s->toploc) < MAX_STACK_SIZE) {
+	s->toploc = s->toploc +1;
+    int val = s->toploc;
+	s->stack[val] = tmp;
+    }
+    else
+    {
+        printf("더이상 push할 수 없습니다.\n");
+    }
+    
+}
+
+int empty(stackObject* s) {
+	if (s->toploc == -1)
+		return 0;
+	else
+		return 1;
+}
+
+char top(stackObject* s) {
+    if( (s->toploc) != -1) {
+	    char topval = s->stack[s->toploc];
+	    return topval;
+    }
+    else 
+        return -1; 
+}
+
+void pop(stackObject* s) {
+	//stack[toploc] = NULL;
+	if((s->toploc) != -1)
+        (s->toploc)--;
+}
+
+int prec(char c)
+{
+	switch (c) {
+	case '+': case '-': return (1); break;
+	case '*': case '/': return (2); break;
+	case '(': return(0); break;
+	case ')': return(0); break;
+	default: printf("error %c\n", c); while (1);
+	}
+}
+int main()
+{   stackObject s;
+    init(&s);
+    char cmd[100];
+	char tmp;
+	int i;
+	while (1) {
+		printf("input string = ");
+		fgets(cmd, sizeof(cmd), stdin);
+		i = 0;
+		while (cmd[i] != '\n') {
+            //printf("이번에 들어온거는 %c이다.\n",cmd[i]);
+			// 숫자이면 바로 출력하고...
+			if ((cmd[i] <= '9') && (cmd[i] >= '0')) {
+				printf("%d", cmd[i] - '0');
+			}
+			// 연산자이면 
+			else {
+				// 비어 있으면 스택에 넣고 
+				if ( empty(&s) == 0) {
+					push(cmd[i],&s);
+				}
+				else if (cmd[i] == '(') {
+					push(cmd[i],&s);
+				}
+                else {
+            // 스택이 비어있지 않고 && 스택 top의 우선순위가 더 높다면 pop
+                    while(empty(&s) == 1 && prec(cmd[i]) <= prec(top(&s))){
+                        printf("%c", top(&s));
+                        pop(&s);
+                    }
+                    push(cmd[i],&s);
+                }
+            }
+			i++;
+		}
+		//이제 stack에 있는 값 출력
+		while (empty(&s) ==1) {
+            char val = top(&s);
+			printf("%c", val);
+			pop(&s);
+		}
+	}
+}
+
+
+
+/////////////////////////////1번: 후위 표기 list로 구현///////////////////////////////
+#include <stdio.h> 
+#include <stdlib.h>
+#include <string.h>
+#include <malloc.h>
+
+typedef struct StackNode {
+	char item;
+	struct StackNode *pre;
+} StackeNode;
+
+typedef struct {
+	StackNode *top;
+}stack;
+// 삽입 함수 
+
+StackNode empty;
+
+void push(stack *s, char item)
+{
+	StackNode *temp = (StackNode *)malloc(sizeof(StackNode));
+	if (temp == NULL) {
+		printf("메모리 할당에러\n");
+	}
+
+	else {
+		temp->item = item;
+		temp->pre = s->top;
+		s->top = temp;
+	}
+}
+
+void init(stack *s) {
+	s->top = NULL;
+}
+// 삭제 함수 
+
+
+int is_empty(stack *s) {
+	if (s->top == NULL)
+		return 0;
+	else
+		return 1;
+}
+
+
+void pop(stack *s)
+{
+	if (is_empty(s) == 0) {
+		printf("스택이 비어있음\n");
+		exit(1);
+	}
+
+	else {
+		StackNode *temp = s->top;
+		int item = temp->item;
+		s->top = s->top->pre;
+		free(temp);
+	}
+}
+
+
+char top(stack* s) {
+	if (is_empty(s) == 1) {
+		char topval = s->top->item;
+		return topval;
+	}
+	else {
+		printf("top에 값이 없습니다.\n");
+	}
+}
+
+int prec(char c)
+{
+	switch (c) {
+	case '+': case '-': return (1); break;
+	case '*': case '/': return (2); break;
+	case '(': return(0); break;
+	case ')': return(0); break;
+	default: printf("error %c\n", c); while (1);
+	}
+}
+
+
+int main()
+{
+	stack* s = (stack*)malloc(sizeof(stack));
+	init(s);
+	char cmd[100];
+	char tmp;
+	int i;
+	while (1) {
+		printf("input string = ");
+		fgets(cmd, sizeof(cmd), stdin);
+		i = 0;
+		while (cmd[i] != '\n') {
+			// 숫자이면 바로 출력하고...
+			if ((cmd[i] <= '9') && (cmd[i] >= '0')) {
+				printf("%d", cmd[i] - '0');
+			}
+			// 연산자이면 
+			else {
+				// 비어 있으면 스택에 넣고 
+				if (is_empty(s) == 0) {
+					push(s, cmd[i]);
+				}
+				else if (cmd[i] == '(') {
+					push(s, cmd[i]);
+				}
+				else if (cmd[i] == ')') {
+					char top_op = top(s);
+					pop(s);
+					while (top_op != '(') {
+						printf("%c ", top_op);
+						top_op = top(s);
+						pop(s);
+					}
+					pop(s);
+				}
+				else {
+					// 스택이 비어있지 않고 && 스택 top의 우선순위가 더 높다면 pop
+					while (is_empty(s) == 1 && prec(cmd[i]) <= prec(top(s))) {
+						printf("%c", top(s));
+						pop(s);
+					}
+					push(s, cmd[i]);
+				}
+			}
+			i++;
+		}
+		//이제 stack에 있는 값 출력B
+		while (is_empty(s)) {
+			printf("%c", top(s));
+			pop(s);
+		}
+	}
+}
+
+
+///////////////////////////////1번: 큐문제 배열로 표현//////////////////////////////////////////
+
+#include <stdio.h>
+#include <iostream> 
+#include <queue> 
+#include <stack> 
+#include <algorithm> 
+#include <stdio.h> 
+#include <random> 
+#include <time.h> 
+
+using namespace std;
+#define MAX 100
+
+typedef struct queueRec {
+	double queue[MAX];
+	int front, rear;
+}queueObject;
+
+void init(queueObject* q) {
+	q->front = q->rear = 0;
+}
+
+int empty(queueObject* q) {
+	if (q->front == q->rear)//front와 rear가 같으면 큐는 비어있는 상태 
+		return 0;
+	else
+		return 1;
+}
+
+int full(queueObject* q) {
+	if (((q->rear + 1) % MAX) == q->front)//큐가 가득차 있는 상태를 나타냄 
+		return 0;
+	else
+		return 1;
+}
+
+void push(char value, queueObject* q) {
+	if (full(q) == 1) {
+		q->rear++;
+		q->queue[q->rear] = value;
+	}
+	else
+		printf("더이상 push할 수 없습니다.\n");
+}
+
+void pop(queueObject* q) {
+	if (empty(q) == 1) {
+		q->queue[q->front] = NULL;
+		//front를 옮김
+		q->front = (q->front + 1) % MAX;
+	}
+
+	else {
+		printf("pop할 내용이 없습니다.\n");
+	}
+}
+
+int size(queueObject* q) {
+	return ((q->rear) - (q->front));
+}
+
+
+int main()
+{
+	//std::mt19937 mrand(std::time(0)); 
+	//std::poisson_distribution<uint> d(750); 
+	queueObject q;
+	init(&q);
+	default_random_engine gen;
+	double lamb2 = 3.5;
+	exponential_distribution<double>::param_type lamb(lamb2 = 3.5);
+	exponential_distribution<double> d(lamb);
+
+	clock_t stime, etime, s2time, e2time;
+	stime = etime = s2time = e2time = clock();
+	double i_a;
+	i_a = d(gen); // interarrival time... 
+	while (1) {
+		stime = s2time = clock();
+		if ((stime - etime) / (double)CLOCKS_PER_SEC > i_a) {
+			printf("%d %d %d %lf %lf\n", stime, etime, size(&q), (stime - etime) / (double)CLOCKS_PER_SEC, i_a);
+			etime = stime;
+			i_a = d(gen);
+			push(1,&q);
+		}
+		if ((s2time - e2time) / (double)CLOCKS_PER_SEC > 0.5) {
+			e2time = s2time;
+			pop(&q);
+		}
+
+		if (size(&q) > 15) {
+			//lamb2 += 1.0; 
+			//d.param(lamb(lamb2)); 
+			if (lamb2 > 0.5) lamb2 -= 0.5;
+			lamb(lamb2);
+			d.param();
+		}
+		else if (size(&q) < 10) {
+			//if (lamb2>0.1) lamb2 -= 1.0; 
+			//else lamb2 -= 1.0; 
+			//d.param(lamb(lamb2)); 
+			if (lamb2 < 10) lamb2 += 0.5;
+			d.param(lamb2);
+		}
+	}
+	//d(mrand); 
+}
+
+
+///////////////////////////////////////1번: 큐문제 list로 구현///////////////////////////
+
+#include <stdio.h>
+#include <iostream> 
+#include <queue> 
+#include <stack> 
+#include <algorithm> 
+#include <stdio.h> 
+#include <random> 
+#include <time.h> 
+
+using namespace std;
+
+//큐 - 연결리스트 이용
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct Node //노드 정의
+{
+	double data;
+	struct Node *next;
+}Node;
+
+typedef struct queueRec //Queue 구조체 정의
+{
+	Node *front; //맨 앞(꺼낼 위치)
+	Node *rear; //맨 뒤(보관할 위치)
+	int count;
+}queueObj;
+
+void init(queueObj* q)
+{
+	q->front = q->rear = NULL; //front와 rear를 NULL로 설정
+	q->count = 0;
+}
+
+int empty(queueObj* q)
+{
+	if (q->count == 0)
+		return 0;
+	else
+		return 1;
+}
+
+void push(double data,queueObj *q)
+{
+	Node *newQ = (Node *)malloc(sizeof(Node)); //노드 생성
+	newQ->data = data;//데이터 설정
+	newQ->next = NULL;
+	//이제 큐의 위치를 찾아야 한다.
+	if (empty(q))//큐가 비어있을 때
+	{
+		q->front = newQ;//맨 앞을 now로 설정       
+	}
+	else//무언가 있을 떄
+	{
+		q->rear->next = newQ;//맨 뒤의 다음을 now로 설정
+	}
+	//rear값 갱신
+	q->rear = newQ;//맨 뒤를 now로 설정   
+	q->count++;//보관 개수를 1 증가
+}
+
+void pop(queueObj* q)
+{
+	if (empty(q))//큐가 비었을 때
+	{
+		printf("pop할 data가 없습니다.\n");
+	}
+	Node *popQ =(Node*)malloc(sizeof(Node));
+	popQ = q->front;
+	q->front = q->front->next;
+	free(popQ);//now 소멸
+	q->count--;//보관 개수를 1 감소
+}
+
+int size(queueObj*q) {
+	return q->count;
+}
+
+int main()
+{
+	//std::mt19937 mrand(std::time(0)); 
+	//std::poisson_distribution<uint> d(750); 
+	queueObj* q;
+	q = (queueObj*)malloc(sizeof(queueObj));
+	init(q);
+
+	default_random_engine gen;
+	double lamb2 = 3.5;
+	exponential_distribution<double>::param_type lamb(lamb2 = 3.5);
+	exponential_distribution<double> d(lamb);
+
+	clock_t stime, etime, s2time, e2time;
+	stime = etime = s2time = e2time = clock();
+	double i_a;
+	i_a = d(gen); // interarrival time... 
+	while (1) {
+		stime = s2time = clock();
+		if ((stime - etime) / (double)CLOCKS_PER_SEC > i_a) {
+			printf("%d %d %d %lf %lf\n", stime, etime, size(q), (stime - etime) / (double)CLOCKS_PER_SEC, i_a);
+			etime = stime;
+			i_a = d(gen);
+			push(1,q);
+		}
+		if ((s2time - e2time) / (double)CLOCKS_PER_SEC > 0.5) {
+			e2time = s2time;
+			pop(q);
+		}
+
+		if (size(q) > 15) {
+			//lamb2 += 1.0; 
+			//d.param(lamb(lamb2)); 
+			if (lamb2 > 0.5) lamb2 -= 0.5;
+			lamb(lamb2);
+			d.param();
+		}
+		else if (size(q) < 10) {
+			//if (lamb2>0.1) lamb2 -= 1.0; 
+			//else lamb2 -= 1.0; 
+			//d.param(lamb(lamb2)); 
+			if (lamb2 < 10) lamb2 += 0.5;
+			d.param(lamb2);
+		}
+	}
+	//d(mrand); 
+}
+
+
+
+
+
+///////////////////////////////////2번과제(1번의 배열을 이용한 stack에 이어서 코드 작성)///////////////
+#include <iostream> 
+#include <stdio.h> 
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX_STACK_SIZE 100
+
+typedef struct stackRec {
+	char stack[MAX_STACK_SIZE];
+	int toploc;
+} stackObject;
+
+
+void init(stackObject* s) {
+	s->toploc = -1;
+}
+
+void push(char tmp, stackObject* s) {
+	if ((s->toploc) < MAX_STACK_SIZE) {
+		s->toploc = s->toploc + 1;
+		int val = s->toploc;
+		s->stack[val] = tmp;
+	}
+	else
+	{
+		printf("더이상 push할 수 없습니다.\n");
+	}
+
+}
+
+int empty(stackObject* s) {
+	if (s->toploc == -1)
+		return 0;
+	else
+		return 1;
+}
+
+char top(stackObject* s) {
+	if ((s->toploc) != -1) {
+		char topval = s->stack[s->toploc];
+		return topval;
+	}
+	else
+		return -1;
+}
+
+void pop(stackObject* s) {
+	//stack[toploc] = NULL;
+	if ((s->toploc) != -1)
+		(s->toploc)--;
+}
+
+
+char result[] = { NULL };
+int count = 0;
+
+//(int)strlen(result)
+int cal(stackObject* t) {
+	int k;
+	for (k = 0; k <(int)strlen(result); k++) {
+		char op1, op2, value, i = 0;
+		char calv = result[k];
+		if (calv != '+' && calv != '-' && calv != '*' && calv != '/') {
+			value = calv;// 입력이 피연산자이면 스택에 저장
+			push(value,t);
+		}
+		else {
+			op2 = top(t);
+			pop(t);
+			op1 = top(t);
+			pop(t);
+			int numop1 = op1 - '0';
+			int numop2 = op2 - '0';
+			int calnum;
+			char cal;
+			switch (calv) { //연산을 수행하고 스택에 저장 
+			case '+':
+				calnum = numop1 + numop2;
+				cal = calnum + '0';
+				push(cal, t);
+				break;
+			case '-':
+				calnum = numop1 - numop2;
+				cal = calnum + '0';
+				push(cal, t);
+				break;
+			case '*':
+				calnum = numop1 * numop2;
+				cal = calnum + '0';
+				push(cal, t);
+				break;
+			case '/':
+				calnum = numop1 / numop2;
+				cal = calnum + '0';
+				push(cal, t);
+				break;
+
+			}
+		}
+	}
+	char res = top(t);
+	pop(t);
+	int re = res - '0';
+	return re;
+}
+
+
+
+int prec(char c)
+{
+	switch (c) {
+	case '+': case '-': return (1); break;
+	case '*': case '/': return (2); break;
+	case '(': return(0); break;
+	case ')': return(0); break;
+	default: printf("error %c\n", c); while (1);
+	}
+}
+int main()
+{
+	stackObject s;
+	init(&s);
+	stackObject t;
+	init(&t);
+	char cmd[100];
+	char tmp;
+	int i;
+
+	while (1) {
+		count = 0;
+		printf("input string = ");
+		fgets(cmd, sizeof(cmd), stdin);
+		i = 0;
+		printf("-후위 표기식\n");
+		while (cmd[i] != '\n') {
+			//printf("이번에 들어온거는 %c이다.\n",cmd[i]);
+			// 숫자이면 바로 출력하고...
+			if ((cmd[i] <= '9') && (cmd[i] >= '0')) {
+				printf("%d", cmd[i] - '0');
+				result[count] = cmd[i];
+				count++;
+			}
+			// 연산자이면 
+			else {
+				// 비어 있으면 스택에 넣고 
+				if (empty(&s) == 0) {
+					push(cmd[i], &s);
+				}
+				else if (cmd[i] == '(') {
+					push(cmd[i], &s);
+				}
+				else if (cmd[i] == ')') {
+					char top_op = top(&s);
+					pop(&s);
+					while (top_op != '(') {
+						printf("%c ", top_op);
+						result[count] = top_op;
+						count++;
+						top_op = top(&s);
+						pop(&s);
+					}
+				}
+				else {
+					// 스택이 비어있지 않고 && 스택 top의 우선순위가 더 높다면 pop
+					while (empty(&s) == 1 && prec(cmd[i]) <= prec(top(&s))) {
+						printf("%c", top(&s));
+						result[count] = top(&s);
+						count++;
+						pop(&s);
+					}
+					push(cmd[i], &s);
+				}
+			}
+			i++;
+		}
+		//이제 stack에 있는 값 출력
+		while (empty(&s) == 1) {
+			char val = top(&s);
+			printf("%c", val);
+			result[count] = val;
+			count++;
+			pop(&s);
+		}
+		printf("\n -계산 결과:\n");
+		int result = cal(&t);
+		printf("%d", result);
+	}
+}
+
+
+
+
+
+///////////////////////////////////////////////////3번 과제/////////////////
+#include<stdio.h>
+#define MAX_stack_last 100
+#define MAZE_last 6
+
+//stack관련 구조체, 함수들 선언
+typedef struct  stackObjectRec {
+	int r;
+	int c;
+} stackObject;
+stackObject stack[MAX_stack_last];
+stackObject here = { 1,0 };
+int top = -1;
+
+//어느 위치로부터 왔는지를 저장하는 구조체(즉, 자신의 직전 위치를 저장하는 구조체)
+typedef struct PathRec {
+	int prer;
+	int prec;
+} pathObject;
+
+pathObject path[MAZE_last][MAZE_last] = { 0,0 };
+
+void push(stackObject);
+stackObject pop();
+void pushLoc(int, int, int, int);
+void printMaze(char m[MAZE_last][MAZE_last]);
+void printstack();
+int isEmpty();
+
+//미로 생성
+char maze[MAZE_last][MAZE_last] = {
+	{'1', '1', '1', '1', '1', '1'},
+	{'e', '0', '1', '0', '0', '1'},
+	{'1', '0', '0', '0', '1', '1'},
+	{'1', '0', '1', '0', '1', '1'},
+	{'1', '0', '1', '0', '0', 'x'},
+	{'1', '1', '1', '1', '1', '1'},
+};
+
+int main() {
+	int r, c;
+
+	while (maze[here.r][here.c] != 'x') {//here이 출구에 도착할 때까지 반복
+		printf("현재 위치 출력:\n");
+		printMaze(maze);
+		r = here.r;
+		c = here.c;
+		maze[r][c] = '.'; //현재 경로를 방문하였다고 표시
+		//현재 위치를 기준으로 가보지 못한 길을 stack에 저장한다.
+		if (r > 0)
+			pushLoc(r - 1, c, r, c);
+		if (r < 5)
+			pushLoc(r + 1, c, r, c);
+		if (c > 0)
+			pushLoc(r, c - 1, r, c);
+		if (c < 5)
+			pushLoc(r, c + 1, r, c);
+		printf("갈 수 있는 위치를 stack에 넣은 후의 stack내용:\n");
+		printstack();
+
+		if (isEmpty() == 0) {//만약 출구에 도착하기 전에 stack에 내용이 없다면 실패
+			printf("failed\n");
+			return 0;
+		}
+
+		else {
+			here = pop(); //위치 이동
+			if (maze[here.r][here.c] == 'x') { //만약 출구에 도착하였으면
+				printf("현재 위치 출력:\n");
+				printMaze(maze);
+				printf("출구에 도착하였습니다.\n");
+				while (top != -1) { //stack 초기화
+					stackObject stackclear = pop();
+				}
+
+				push(here);//스택의 가장 처음에 (4,5) 저장
+				//자신의 직전 위치를 나타낸 path배열을 통해 출구에서 시작하여 시작점까지 갔던 길을 거꾸로 찾는다.
+				while ((here.r) != 1 && (here.c) != 0) { //here이 시작 지점에 도착할 때까지 왔던 길을 거꾸로 탐색
+					here.r = path[here.r][here.c].prer;
+					here.c = path[here.r][here.c].prec;
+					push(here);
+				}
+				stackObject tmp;
+				while (top != 0) {
+					tmp = pop(); //stack의 내용을 하나씩 pop하면서 출력
+					printf("( %d , %d ) -> ", tmp.r, tmp.c);
+				}
+				tmp = pop();
+				printf("( %d , %d )\n", tmp.r, tmp.c);
+				printf("success\n");
+				return 0;
+			}
+		}
+	}
+}
+
+void push(stackObject tmp) {
+	top++;
+	stack[top].r = tmp.r;
+	stack[top].c = tmp.c;
+}
+
+stackObject pop() {
+	stackObject tmp = stack[top];
+	stack[top].r = 0;
+	stack[top].c = 0;
+	top--;
+	return tmp;
+}
+
+void pushLoc(int r, int c, int prer, int prec)
+{
+	if (r == 0 || c == 0) {
+		return;
+	}
+	else if ((maze[r][c] != '1') && (maze[r][c] != '.')) {
+		stackObject tmp;
+		tmp.r = r;
+		tmp.c = c;
+		//해당 위치가 어느 길로부터 왔는지를 저장
+		path[r][c].prer = prer;
+		path[r][c].prec = prec;
+		push(tmp);
+	}
+}
+
+void printMaze(char maze[MAZE_last][MAZE_last])
+{
+	int i, j;
+	for (i = 0; i < MAZE_last; i++) {
+		for (j = 0; j < MAZE_last; j++) {
+			if (here.r == i && here.c == j)
+				printf("h ");
+			else
+				printf("%c ", maze[i][j]);
+		}
+		printf("\n");
+	}
+}
+
+void printstack()
+{
+	int i;
+	for (i = 5; i > top; i--)
+		printf("|     |\n");
+	for (i = top; i >= 0; i--)
+		printf("|(%01d,%01d)|\n", stack[i].r, stack[i].c);
+	printf("-------\n");
+}
+
+
+int isEmpty() {
+	if (top == -1)
+		return 0;
+	else
+		return 1;
+}
